@@ -1,0 +1,15 @@
+name: usb-security-env
+description: RL environment for USB security system
+
+actions:
+  - allow
+  - block
+
+states:
+  - owner
+  - intruder
+
+reward:
+  allow_owner: 10
+  block_intruder: 15
+  wrong_action: -10
