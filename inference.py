@@ -4,26 +4,28 @@ import random
 
 app = FastAPI()
 
-# Request model
+# Empty request body model (IMPORTANT)
+class ResetRequest(BaseModel):
+    pass
+
 class ActionRequest(BaseModel):
     action: str
 
-# Global state
 current_state = None
 
-# Reset endpoint
+# ✅ FIXED RESET (accepts body)
 @app.post("/reset")
-def reset():
+def reset(req: ResetRequest):
     global current_state
     current_state = random.choice(["owner", "unknown", "suspicious"])
     return {"state": current_state}
 
-# Step endpoint
+# ✅ STEP API
 @app.post("/step")
-def step(request: ActionRequest):
+def step(req: ActionRequest):
     global current_state
 
-    action = request.action
+    action = req.action
 
     if current_state == "owner" and action == "allow":
         reward = 15
