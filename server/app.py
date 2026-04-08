@@ -9,24 +9,23 @@ current_state = {"value": None}
 class ActionInput(BaseModel):
     action: str
 
-@app.get("/")
-def home():
-    return {"message": "API Running"}
-
-# ✅ MUST be POST
 @app.post("/reset")
 def reset():
     state = random.choice(["owner", "unknown", "suspicious"])
     current_state["value"] = state
     return {"state": state}
 
-# ✅ MUST be POST
 @app.post("/step")
 def step(input: ActionInput):
     state = current_state["value"]
 
-    return {
-        "state": state,
-        "reward": 10,
-        "done": True
-    }
+    if state == "owner" and input.action == "allow":
+        reward = 15
+    elif state == "unknown" and input.action == "alert":
+        reward = 10
+    elif state == "suspicious" and input.action == "block":
+        reward = 20
+    else:
+        reward = -20
+
+    return {"state": state, "reward": reward, "done": True}
