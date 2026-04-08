@@ -1,22 +1,50 @@
+import random
 import gradio as gr
 from fastapi import FastAPI
-from env import USBEnv
+
+# -----------------
+# Environment
+# -----------------
+
+class USBEnv:
+    def __init__(self):
+        self.users = ["owner", "unknown", "suspicious"]
+
+    def reset(self):
+        return random.choice(self.users)
+
+    def step(self, state, action):
+        if state == "owner" and action == "allow":
+            return state, 15, True
+        elif state == "unknown" and action == "alert":
+            return state, 10, True
+        elif state == "suspicious" and action == "block":
+            return state, 20, True
+        else:
+            return state, -20, True
+
 
 env = USBEnv()
 
-# FastAPI
+# -----------------
+# API (FOR SUBMISSION)
+# -----------------
+
 api = FastAPI()
+
+current_state = {"value": None}
 
 @api.post("/reset")
 def reset():
-    state = env.reset()
-    return {"state": state}
+    current_state["value"] = env.reset()
+    return {"state": current_state["value"]}
 
 @api.post("/step")
 def step(data: dict):
     action = data.get("action")
-    next_state, reward, done = env.step(action)
-    return {"state": next_state, "reward": reward, "done": done}
+    state = current_state["value"]
+    state, reward, done = env.step(state, action)
+    return {"state": state, "reward": reward, "done": done}
 
 
 # -----------------
@@ -25,26 +53,39 @@ def step(data: dict):
 
 def generate_user():
     state = env.reset()
+    current_state["value"] = state
     return f"User Type: {state}"
 
 def take_action(action):
-    next_state, reward, done = env.step(action)
-    return f"State: {next_state}, Reward: {reward}"
+    state = current_state["value"]
+    if state is None:
+        return "Generate user first!"
+
+    state, reward, done = env.step(state, action)
+    return f"State: {state} | Reward: {reward}"
 
 
-with gr.Blocks() as demo:
-    gr.Markdown("# USB Security System")
+demo = gr.Interface(
+    fn=take_action,
+    inputs=gr.Radio(["allow", "block", "alert"], label="Action"),
+    outputs="text",
+    title="🔐 USB Security System",
+    description="Generate user first, then take action."
+)
 
-    state_output = gr.Textbox(label="User Info")
-    generate_btn = gr.Button("Generate User")
+# Add button manually
+with gr.Blocks() as app:
+    gr.Markdown("# 🔐 USB Security System")
+    btn = gr.Button("Generate User")
+    out1 = gr.Textbox(label="User")
+    action = gr.Radio(["allow", "block", "alert"])
+    btn2 = gr.Button("Submit")
+    out2 = gr.Textbox()
 
-    action_input = gr.Radio(["allow", "block", "alert"], label="Choose Action")
-    submit_btn = gr.Button("Submit Action")
-
-    result_output = gr.Textbox(label="Result")
-
-    generate_btn.click(generate_user, outputs=state_output)
-    submit_btn.click(take_action, inputs=action_input, outputs=result_output)
+    btn.click(generate_user, outputs=out1)
+    btn2.click(take_action, inputs=action, outputs=out2)
 
 
-app = gr.mount_gradio_app(api, demo, path="/")
+# 🔥 FINAL RUN FIX
+if __name__ == "__main__":
+    app.launch(server_name="0.0.0.0", server_port=7860)
