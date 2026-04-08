@@ -1,4 +1,4 @@
-entrypoint: server.app:app
+entrypoint: app:app
 
 env_id: usb-security-env
 version: "1.0.0"
