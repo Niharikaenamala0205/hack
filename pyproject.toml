@@ -2,9 +2,10 @@
 name = "usb-security-env"
 version = "0.1.0"
 dependencies = [
-    "gradio",
     "fastapi",
     "uvicorn",
-    "openai",
-    "requests"
+    "openenv-core>=0.2.0"
 ]
+
+[project.scripts]
+server = "server.app:app"
