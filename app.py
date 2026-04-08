@@ -1,43 +1,45 @@
 import random
-import gradio as gr
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import uvicorn
-import threading
-from env import USBEnv
 
-env = USBEnv()
+app = FastAPI()
 
-# -----------------
-# FastAPI
-# -----------------
-api = FastAPI()
+users = ["owner", "unknown", "suspicious"]
+current_state = {"value": None}
 
-@api.post("/reset")
-async def reset():
-    state = env.reset()
+@app.get("/")
+def home():
+    return {"message": "API Running"}
+
+@app.post("/reset")
+def reset():
+    state = random.choice(users)
+    current_state["value"] = state
     return {"state": state}
 
-@api.post("/step")
-async def step(request: Request):
-    data = await request.json()
+@app.post("/step")
+def step(data: dict):
     action = data.get("action")
+    state = current_state["value"]
 
-    next_state, reward, done = env.step(action)
-    return {"state": next_state, "reward": reward, "done": done}
+    if state == "owner" and action == "allow":
+        reward = 15
+    elif state == "unknown" and action == "alert":
+        reward = 10
+    elif state == "suspicious" and action == "block":
+        reward = 20
+    else:
+        reward = -20
 
+    return {
+        "state": state,
+        "reward": reward,
+        "done": True
+    }
 
-# -----------------
-# Gradio UI
-# -----------------
-
-current_state = None
-
-def generate_user():
-    global current_state
-    current_state = env.reset()
-    return f"🔍 User Type: {current_state}"
-
-def take_action(action):
+# 🔥 THIS IS THE MOST IMPORTANT PART
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=7860)
     global current_state
     
     if current_state is None:
