@@ -1,3 +1,6 @@
+import os
+os.system("pip install --upgrade gradio")
+
 import gradio as gr
 from fastapi import FastAPI
 from env import USBEnv
