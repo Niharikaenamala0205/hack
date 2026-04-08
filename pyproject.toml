@@ -1,0 +1,10 @@
+[project]
+name = "usb-security-env"
+version = "0.1.0"
+dependencies = [
+    "gradio",
+    "fastapi",
+    "uvicorn",
+    "openai",
+    "requests"
+]
