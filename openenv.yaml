@@ -1,3 +1,5 @@
+entrypoint: server.app:app
+
 env_id: usb-security-env
 version: "1.0.0"
 description: "USB intrusion detection environment"
